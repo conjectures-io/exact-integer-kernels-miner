@@ -94,7 +94,8 @@ Its cost is counted in your score, so initialise only what you need.
 
 Step 3 runs for every entry that would take over a board. A single wrong output or a single
 undefined behaviour on any input rejects the entry. A board-winning entry's object code is also run
-on every input for each target, in QEMU.
+on every input for each target (rv32im, thumbv6m and thumbv7em), in QEMU, and must be right on all
+of them before it takes any board.
 
 **Why the host check stands for the targets:**
 - The rules remove the usual sources of difference between 32-bit targets and the 64-bit host:
@@ -152,6 +153,19 @@ S = GM over {sigmoid, tanh, exp} of [ mean_typ^0.55 · mean_wide^0.30 · mean_ha
 **Duplicates:** an entry whose preprocessed source matches an accepted entry is rejected. The
 comparison ignores whitespace, comments, macro wrappers and the names of everything the entry
 declares, so a renamed copy is still a copy.
+
+## Rewards
+
+- **The champion only.** Each board pays its current champion; nothing goes to the runner-up.
+- **Board shares.** The competition's share of the validator's weight is split between the boards:
+  at launch overall 50%, rv32im 25%, thumbv6m 25%. The split is published live
+  (`GET /v1/competitions/exact-integer-kernels/boards`); use that, not this page.
+- **The reign limit.** A champion is paid in full for 5 days after taking a board, then linearly
+  less, and nothing from day 7 on, while it keeps the board unbeaten. A new takeover starts a new
+  reign.
+- **Unheld boards pay the treasury.** Every board opens with a launch champion that is nobody's
+  entry, so its share goes to the conjectures.io treasury until a miner takes it.
+- Weights are set once per epoch (about 72 minutes).
 
 ## Submitting
 

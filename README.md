@@ -59,7 +59,8 @@ uint32_t eik_exp(uint32_t x);       /* correctly rounded e^x */
   is checked on the compiled code, for every input at once: the frames of all your functions plus
   the compiler's helpers must add up to at most 8 KiB (`eik check` reports `stack_bound`).
 
-[RULES.md](RULES.md) has the full rules, the score formula and the reasons behind each rule.
+[RULES.md](RULES.md) has the full rules, the score formula, the reasons behind each rule, and how
+champions are paid (the champion only, per board, for up to 7 days per reign).
 
 ## Setup
 
@@ -235,20 +236,23 @@ A refused request returns a JSON body with `reason_code` and `detail`.
 
 ```
 entry.c
-  │ 1. gate: static rules on the text, the clang AST and each target's object file; size caps;
-  │          duplicate check against accepted entries (renaming identifiers does not help)
+  │ 1. gate: static rules on the text, the clang AST and each target's object file; size caps; a
+  │          stack bound from the compiled code (8 KiB for every input); duplicate check against
+  │          accepted entries (renaming identifiers does not help)
   │ 2. measure: instruction counts on each target (Unicorn emulator) on fresh inputs from a seed you
   │          cannot know in advance; every output checked; peak stack; a 32,768-word sample checked
   │          on each target. The champions are re-measured on the same inputs
   │ 3. score each board; a candidate if S ≤ 0.97 × the champion's S
-  │ 4. full check: all 2³² inputs of each function under UBSan and ASan, against the reference
-  ▼ 5. takeover of every board where the entry is a candidate and the full check passed
+  │ 4. full check: all 2³² inputs of each function under UBSan and ASan, against the reference,
+  │          and all 2³² on each target's object code (rv32im, thumbv6m, thumbv7em) in QEMU
+  ▼ 5. takeover of every board where the entry is a candidate and every check passed
 ```
 
 ## Where the score is
 
-- **Typical inputs weigh 50%**, the wide spread of magnitudes 30%, and near-midpoint hard inputs 20%
-  (geometric weights, per function, then a geometric mean over the three functions).
+- **Typical inputs weigh 55%**, the wide spread of magnitudes 30%, near-midpoint hard inputs 10% and
+  uniformly random words 5% (geometric weights, per function, then a geometric mean over the three
+  functions). The uniform set means a slow path anywhere in the input range costs score.
 - **The fallback is expensive.** Every input that reaches the incumbent costs ~100–200k instructions,
   so the inputs your fast path declines dominate the means. The tail term also charges for slow
   outliers among the hard inputs.
