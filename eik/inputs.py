@@ -118,7 +118,10 @@ def draw(seed: int, fn: str) -> dict:
     k = max(0, n["hard"] - len(fixed))
     hard = fixed + ([rng.choice(pool) for _ in range(k)] if pool else
                     [rng.getrandbits(32) for _ in range(k)])
-    return {"typical": typical_set, "wide": wide, "hard": hard}
+    # Its own stream, so adding it changed none of the other sets' words.
+    urng = random.Random(f"{seed}:{fn}:uniform")
+    uniform = [urng.getrandbits(32) for _ in range(n["uniform"])]
+    return {"typical": typical_set, "wide": wide, "hard": hard, "uniform": uniform}
 
 
 def target_sample(seed: int, n: int) -> list:

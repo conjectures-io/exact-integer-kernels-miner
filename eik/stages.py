@@ -78,7 +78,7 @@ def gate(src: Path, known_hashes=()) -> dict:
         return _reject(rep, e.stage, e.reasons)
     except T.BuildError as e:
         return _reject(rep, "build", [str(e)])
-    rep.update(bytes=info["bytes"], normalised_sha256=norm)
+    rep.update(bytes=info["bytes"], stack_bound=info["stack_bound"], normalised_sha256=norm)
     if norm in set(known_hashes):
         return _reject(rep, "duplicate", ["same normalised source as an accepted entry (whitespace, comments, "
                                           "macros and identifier names are ignored)"])

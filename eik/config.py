@@ -40,7 +40,7 @@ BOARDS = SCORED + ["overall"]
 
 # One set of flags for every build of a submission. -ftrivial-auto-var-init=zero makes a read of an
 # uninitialised local deterministic (zero) on every target, so it cannot differ between ISAs.
-CFLAGS = ["-std=c11", "-O2", "-ffreestanding", "-fno-builtin", "-ftrivial-auto-var-init=zero",
+CFLAGS = ["-std=c11", "-O2", "-ffreestanding", "-fno-builtin", "-ftrivial-auto-var-init=zero", "-fstack-size-section", "-fno-jump-tables",
           "-Werror=vla", "-Werror=implicit-function-declaration", "-Werror=int-conversion",
           "-Wno-unused-command-line-argument", "-fno-unwind-tables", "-fno-asynchronous-unwind-tables"]
 HOST_CC = os.environ.get("EIK_HOST_CC", "gcc")
@@ -48,14 +48,18 @@ HOST_SANITIZE = ["-fsanitize=undefined,address", "-fno-sanitize-recover=all"]
 
 # Input sets per function and their weights in the score. Production: ~20k per set.
 SCALE = float(os.environ.get("EIK_SCALE", "1"))
-SETS = {"typical": 0.5, "wide": 0.3, "hard": 0.2}
-SET_SIZES = {k: max(20, int(n * SCALE)) for k, n in {"typical": 2000, "wide": 1000, "hard": 300}.items()}
+# "uniform" is words uniform over all 2^32: a small weight so slow paths outside the other sets cost
+# something (the C-8 dry run, research/C8-SCORING.md: without it an entry thousands of times slower
+# there lost 0.4%; with 5% it loses at least 41%, and no tested gamed entry gets closer to a takeover).
+SETS = {"typical": 0.55, "wide": 0.30, "hard": 0.10, "uniform": 0.05}
+SET_SIZES = {k: max(20, int(n * SCALE)) for k, n in
+             {"typical": 2000, "wide": 1000, "hard": 300, "uniform": 1000}.items()}
 TARGET_SAMPLE = max(1024, int(32768 * SCALE))  # words batch-checked on each emulated target
 
-# Score: S = prod_sets mean^w  x  (1 + max(0, p99.9_hard - 20 S_typ)/1e6)^0.1  x  (1 + bytes/64Ki)^0.25,
+# Score: S = prod_sets mean^w  x  (1 + max(0, p99.9_hard - 20 S_typ)/1e6)^0.1  x  (1 + bytes/64Ki)^0.5,
 # geometric mean over the functions. Takeover needs S <= 0.97 x champion's S on the same inputs.
 TAIL_FACTOR, TAIL_SCALE, TAIL_EXP = 20, 1e6, 0.1
-SIZE_UNIT, SIZE_EXP = 64 * 1024, 0.25
+SIZE_UNIT, SIZE_EXP = 64 * 1024, 0.5   # 0.25 let table-heavy entries buy speed with bytes (C-8)
 TAKEOVER_RATIO = 0.97
 
 # Hard caps

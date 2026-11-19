@@ -103,9 +103,12 @@ class Core:
         r = self._call(self.sym[f"eik_{fn}"], [x])
         return r, self.count
 
-    def batch(self, fn, words):
-        """Outputs of eik_<fn> on many words, at full emulator speed (no counting)."""
+    def batch(self, fn, words, *, direct=False):
+        """Outputs without instruction counting. Direct calls exclude the batch wrapper's stack
+        when measuring a submission's stack use on the correctness sample."""
         self._counting(False)
+        if direct:
+            return [self._call(self.sym[f"eik_{fn}"], [w], limit=K.CAP_INSTR_PER_CALL) for w in words]
         out = []
         for i in range(0, len(words), 1 << 20):
             part = words[i:i + (1 << 20)]

@@ -17,6 +17,7 @@ from elftools.elf.elffile import ELFFile
 
 from . import config as K
 from . import toolchain as T
+from . import stack as STACK
 
 PRELUDE_FUNCS = {"memcpy", "memset", "memmove"} | K.ENTRY_POINTS
 BUILTINS = {"__builtin_clz", "__builtin_clzll", "__builtin_ctz", "__builtin_ctzll", "__builtin_expect",
@@ -401,12 +402,19 @@ def check_all(src: Path) -> dict:
     info = check_ast(src)
     check_preprocessing(src)
     check_host_widths(src)
-    sizes = {}
+    sizes, stacks = {}, {}
     for t in K.TARGETS:
         try:
             obj = T.object_file(src, t)
         except T.BuildError as e:
             raise Reject(f"build:{t}", [str(e)])
         sizes[t] = check_object(obj, t)["bytes"]
+        try:
+            stacks[t] = STACK.bound(T.guest_image(src, t), obj, t)
+        except STACK.UnboundedStack as exc:
+            raise Reject(f"stack:{t}", [str(exc)]) from exc
+        if stacks[t] > K.CAP_STACK_BYTES:
+            raise Reject(f"stack:{t}", [f"static stack bound {stacks[t]} > {K.CAP_STACK_BYTES} bytes"])
     info["bytes"] = sizes
+    info["stack_bound"] = stacks
     return info

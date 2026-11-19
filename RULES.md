@@ -110,8 +110,9 @@ independent implementation on GNU MPFR agrees with it on all 2³² inputs of eve
 There is one score per target board (`rv32im`, `thumbv6m`):
 
 ```
-S = GM over {sigmoid, tanh, exp} of [ mean_typ^0.5 · mean_wide^0.3 · mean_hard^0.2 · (1 + max(0, p99.9_hard − 20·mean_typ)/10^6)^0.1 ]
-    · (1 + code_and_table_bytes / 64 KiB)^0.25
+S = GM over {sigmoid, tanh, exp} of [ mean_typ^0.55 · mean_wide^0.30 · mean_hard^0.10 · mean_uniform^0.05
+                                       · (1 + max(0, p99.9_hard − 20·mean_typ)/10^6)^0.1 ]
+    · (1 + code_and_table_bytes / 64 KiB)^0.5
 ```
 
 - **The means** are retired instructions per call in the emulator, on inputs drawn fresh for each
@@ -122,9 +123,13 @@ S = GM over {sigmoid, tanh, exp} of [ mean_typ^0.5 · mean_wide^0.3 · mean_hard
   | Typical | 2,000 | sigmoid, tanh: N(0, 3) and N(0, 1) pre-activations. exp: softmax's x − max, −\|N(0, 3)\| (80%), and N(0, 3) (20%) |
   | Wide | 1,000 | Uniform over exponents for \|x\| ∈ [2⁻³¹, 2⁸] |
   | Hard | 300 | Near-midpoint inputs (within 2⁻¹⁸ ulp of a rounding boundary), specials, each function's thresholds, subnormals |
+  | Uniform | 1,000 | Uniform over all 2³² words: every input counts a little, so a slow path anywhere costs score |
 
 - **The tail term** stops an entry from sending whole regions to a slow fallback.
 - **The size term** charges for code and tables.
+- **The weights** were set by a dry run against deliberately gamed entries (memoising the hard
+  set, trading bytes for speed, slow paths outside the scored sets): none of them gets within 3% of
+  an honest equivalent.
 - **`overall` board:** √(S_rv32im · S_thumbv6m).
 - **`thumbv7em`:** measured and reported, not scored.
 
@@ -136,7 +141,11 @@ S = GM over {sigmoid, tanh, exp} of [ mean_typ^0.5 · mean_wide^0.3 · mean_hard
 
 **Caps:**
 - 64 KiB of code plus tables per target.
-- 8 KiB peak stack.
+- 8 KiB of stack, for every input. The gate bounds it from the compiled code before anything
+  runs: the sum of the stack frames of every function in the linked image, yours and the
+  compiler's helpers, as if all were active at once. An entry whose bound exceeds 8 KiB on any
+  target is rejected at `stack:<target>`, and so is one whose bound cannot be established (an
+  indirect jump, or a call cycle through compiler helpers). The incumbent's bound is about 3.5 KiB.
 - 20M instructions per call.
 - 256 KB of source.
 

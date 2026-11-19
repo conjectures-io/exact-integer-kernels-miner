@@ -32,12 +32,11 @@ def measure(src, target, seed, sample=True):
                 res[name] = {"n": len(counts), "mean": sum(counts) / len(counts), "median": _p(counts, 0.5),
                              "p999": _p(counts, 0.999), "max": max(counts)}
             out["functions"][fn] = res
-        out["stack"] = core.peak_stack()
         if sample:
             words = I.target_sample(seed, K.TARGET_SAMPLE)
             s = {"words": 0, "mismatches": 0, "examples": []}
             for fn in K.FUNCTIONS:
-                got = core.batch(fn, words)
+                got = core.batch(fn, words, direct=True)
                 want = R.outputs(fn, words)
                 s["words"] += len(words)
                 for w, g, e in zip(words, got, want):
@@ -46,6 +45,7 @@ def measure(src, target, seed, sample=True):
                         if len(s["examples"]) < 8:
                             s["examples"].append({"fn": fn, "input": f"{w:08x}", "got": f"{g:08x}", "want": f"{e:08x}"})
             out["sample"] = s
+        out["stack"] = core.peak_stack()
     except Timeout as e:
         out["timeout"] = str(e)
     return out

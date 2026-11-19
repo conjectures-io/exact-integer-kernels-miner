@@ -55,7 +55,9 @@ uint32_t eik_exp(uint32_t x);       /* correctly rounded e^x */
   result, ties to even, for every input, special values included.
 - One self-contained C11 file, integer arithmetic only, no `#include` (the build provides the integer
   types and `memcpy`/`memset`/`memmove`), no mutable state, no `long` or plain `char`.
-- At most 64 KiB of code and tables per target, 8 KiB of stack, 256 KB of source.
+- At most 64 KiB of code and tables per target, 8 KiB of stack, 256 KB of source. The stack limit
+  is checked on the compiled code, for every input at once: the frames of all your functions plus
+  the compiler's helpers must add up to at most 8 KiB (`eik check` reports `stack_bound`).
 
 [RULES.md](RULES.md) has the full rules, the score formula and the reasons behind each rule.
 
@@ -129,9 +131,9 @@ these instead (mean instructions per call, lower is better):
 
 | Board | Launch champion's S | To take it over |
 |---|---|---|
-| `rv32im` | 198.5 | S ≤ 192.5 |
-| `thumbv6m` | 341.8 | S ≤ 331.5 |
-| `overall` | 260.5 | S ≤ 252.6 |
+| `rv32im` | 183.4 | S ≤ 177.8 |
+| `thumbv6m` | 300.4 | S ≤ 291.3 |
+| `overall` | 234.7 | S ≤ 227.6 |
 
 They were measured on seed 20261119. The validator re-measures the champion on your seed's fresh
 inputs, so its figures can differ a little from these. `GET /v1/competitions/exact-integer-kernels/boards` shows the current

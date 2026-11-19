@@ -92,14 +92,15 @@ def details() -> dict:
     verifier = {
         "files": _file_hashes([K.HARNESS / "eik.h", K.HARNESS / "check.c", K.HARNESS / "target_check.c",
                                K.HARNESS / "guest.c", *_exact_c(), *_digests(),
-                               *_eik("policy.py", "toolchain.py", "reference.py", "stages.py")]),
+                               *_eik("policy.py", "stack.py", "toolchain.py", "reference.py", "stages.py")]),
         "constants": {"functions": K.FUNCTIONS, "targets": K.TARGETS, "cflags": K.CFLAGS,
                       "host_sanitize": K.HOST_SANITIZE, "cap_source": K.CAP_SOURCE_BYTES,
                       "cap_code": K.CAP_CODE_BYTES, "cap_stack": K.CAP_STACK_BYTES,
                       "cap_instr": K.CAP_INSTR_PER_CALL, "target_sample": K.TARGET_SAMPLE,
                       "budget": [K.INCUMBENT_CORE_SECONDS_PER_CHUNK, K.BUDGET_FACTOR, K.BUDGET_FLOOR,
                                  K.FULLCHECK_SECONDS]},
-        "tools": {"clang": t["clang"], "host_cc": t["host_cc"], "pyelftools": t["packages"]["pyelftools"]},
+        "tools": {"clang": t["clang"], "host_cc": t["host_cc"], "pyelftools": t["packages"]["pyelftools"],
+                  "capstone": t["packages"]["capstone"]},
     }
     from . import inputs as I
     measurement = {
