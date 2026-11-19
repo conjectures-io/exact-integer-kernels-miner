@@ -1,0 +1,4 @@
+# The upload client, miner/submit.py: sign with the hotkey, send over HTTP. Checking an entry locally
+# first (`submit.py check`, `python -m eik ...`) also needs requirements.txt and gcc.
+bittensor-wallet==4.1.1
+requests==2.34.2
