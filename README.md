@@ -122,6 +122,21 @@ Each submission costs a subnet registration, and a rejected entry still uses it.
 .venv/bin/python -m eik fullcheck entry.c --function sigmoid   # every input of one function
 ```
 
+**The champion to beat is not the incumbent.** Every board opens with a launch champion that
+is correct on all 2³² inputs of each function and far faster than the incumbent. Its source is not
+part of this kit. Locally, `evaluate` compares you with the incumbent, so compare your `S` with
+these instead (mean instructions per call, lower is better):
+
+| Board | Launch champion's S | To take it over |
+|---|---|---|
+| `rv32im` | 198.5 | S ≤ 192.5 |
+| `thumbv6m` | 341.8 | S ≤ 331.5 |
+| `overall` | 260.5 | S ≤ 252.6 |
+
+They were measured on seed 20261119. The validator re-measures the champion on your seed's fresh
+inputs, so its figures can differ a little from these. `GET /v1/competitions/exact-integer-kernels/boards` shows the current
+champions.
+
 - **`check`** runs the validator's static rules: the text, the clang AST, the object file for each
   target, and the size caps. A rejection names the rule that was broken.
 - **`evaluate`** runs what the validator runs, end to end, on a random seed (`--seed N` repeats one):
